@@ -1,4 +1,6 @@
 import React from "react";
+import firebase from "../../firebase";
+import md5 from "md5";
 import {
   Grid,
   Form,
@@ -10,20 +12,132 @@ import {
 } from "semantic-ui-react";
 import { Link } from "react-router-dom";
 
-class Register extends React.Component { 
-      state = {};
+class Register extends React.Component {
+  state = {
+    username: "",
+    email: "",
+    password: "",
+    passwordConfirmation: "",
+    errors: [],
+    loading: false,
+    usersRef: firebase.database().ref("users"),
+  };
 
-      handleChange = () => {}; 
+  isFormValid = () => {
+    let errors = [];
+    let error;
 
-      render() {
-        return (
-      <Grid textAlign="center" verticalAlign="middle">
+    if (this.isFormEmpty(this.state)) {
+      error = { message: "Fill in all fields " };
+      this.setState({ errors: errors.concat(error) });
+      return false;
+    } else if (!this.isPasswordValid(this.state)) {
+      error = { message: "Password is invalid" };
+      this.setState({ errors: errors.concat(error) });
+      return false;
+    } else {
+      //throw error
+      return true;
+    }
+  };
+
+  isFormEmpty = ({ username, email, password, passwordConfirmation }) => {
+    return (
+      !username.length ||
+      !email.length ||
+      !password.length ||
+      !passwordConfirmation.length
+    );
+  };
+
+  isPasswordValid = ({ password, passwordConfirmation }) => {
+    if (password.length < 6 || passwordConfirmation.length < 6) {
+      return false;
+    } else if (password !== passwordConfirmation) {
+      return false;
+    } else {
+      return true;
+    }
+  };
+
+  displayErrors = (errors) =>
+    errors.map((error, i) => <p key={i}>{error.message}</p>);
+
+  handleChange = (event) => {
+    this.setState({ [event.target.name]: event.target.value });
+  };
+
+  handleSubmit = (event) => {
+    if (this.isFormValid()) {
+      this.setState({ errors: [], loading: true });
+      event.preventDefault();
+      firebase
+        .auth()
+        .createUserWithEmailAndPassword(this.state.email, this.state.password)
+        .then((createdUser) => {
+          createdUser.user
+            .updateProfile({
+              displayName: this.state.username,
+              photoURL: `http://gravator.com/avator/${md5(
+                createdUser.user.email
+              )}?d=identicon`,
+            })
+            .then(() => {
+              this.saveUser(createdUser).then(() => {
+                this.setState({
+                  loading: false,
+                });
+              });
+            })
+            .catch((err) => {
+              this.setState({
+                errors: this.state.errors.concat(err),
+                loading: false,
+              });
+            });
+        })
+        .catch((err) => {
+          this.setState({
+            errors: this.state.errors.concat(err),
+            loading: false,
+          });
+        });
+    }
+  };
+
+  saveUser = (createdUser) => {
+    return this.state.usersRef.child(createdUser.user.uid).set({
+      name: createdUser.user.displayName,
+      avatar: createdUser.user.photoURL,
+    });
+  };
+
+  handleInputError = (errors, inputName) => {
+    return errors.some((error) =>
+      error.message.toLowerCase().includes(inputName)
+    )
+      ? "error"
+      : "";
+  };
+
+  render() {
+    const {
+      username,
+      email,
+      password,
+      passwordConfirmation,
+      errors,
+      loading,
+    } = this.state;
+
+    return (
+      <Grid textAlign="center" verticalAlign="middle" className="app">
         <Grid.Column style={{ maxWidth: 450 }}>
           <Header as="h2" icon color="orange" textAlign="center">
             <Icon name="puzzle piece" color="orange" />
-            Register for Awesome Chat  
+            Register for Awesome Chat
           </Header>
-          <Form size="large">
+          <Form onSubmit={this.handleSubmit} size="large">
             <Segment stacked>
               <Form.Input
                 fluid
@@ -32,6 +146,7 @@ class Register extends React.Component {
                 iconPosition="left"
                 placeholder="Username"
                 onChange={this.handleChange}
+                value={username}
                 type="text"
               />
 
@@ -42,6 +157,8 @@ class Register extends React.Component {
                 iconPosition="left"
                 placeholder="Email Address"
                 onChange={this.handleChange}
+                value={email}
+                className={this.handleInputError(errors, "email")}
                 type="email"
               />
 
@@ -52,6 +169,8 @@ class Register extends React.Component {
                 iconPosition="left"
                 placeholder="Password"
                 onChange={this.handleChange}
+                value={password}
+                className={this.handleInputError(errors, "password")}
                 type="password"
               />
 
@@ -62,20 +181,34 @@ class Register extends React.Component {
                 iconPosition="left"
                 placeholder="Password Confirmation"
                 onChange={this.handleChange}
+                value={passwordConfirmation}
+                className={this.handleInputError(errors, "password")}
                 type="password"
               />
 
-              <Button color="orange" fluid size="large">
+              <Button
+                disabled={loading}
+                className={loading ? "loading" : ""}
+                color="orange"
+                fluid
+                size="large"
+              >
                 Submit
               </Button>
             </Segment>
           </Form>
-          <Message>Already a user? <Link to="/login">Login</Link></Message>
+          {this.state.errors.length > 0 && (
+            <Message error>
+              <h3>Error</h3>
+              {this.displayErrors(this.state.errors)}
+            </Message>
+          )}
+          <Message>
+            Already a user? <Link to="/login">Login</Link>
+          </Message>
         </Grid.Column>
       </Grid>
-    );　　　
+    );
   }
 }
 export default Register;
-
- 
