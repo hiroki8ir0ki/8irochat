@@ -5,7 +5,8 @@ import Register from "./component/Auth/Register";
 import Login from "./component/Auth/Login";
 import "semantic-ui-css/semantic.min.css";
 import firebase from "./firebase";
-import { setUser } from './actions';
+import { setUser, clearUser } from "./actions";
+import Spinner from "./Spinner";
 
 import {
   BrowserRouter as Router,
@@ -27,11 +28,16 @@ class Root extends React.Component {
         //console.log(user)
         this.props.setUser(user);
         this.props.history.push("/");
+      } else {
+        this.props.history.push("/login");
+        this.props.dispatch(clearUser());
       }
     });
   }
   render() {
-    return (
+    return this.props.isLoading ? (
+      <Spinner />
+    ) : (
       <Switch>
         <Route exact path="/" component={App} />
         <Route path="/login" component={Login} />
@@ -41,7 +47,13 @@ class Root extends React.Component {
   }
 }
 
-const RootWithAuth = withRouter(connect(null, { setUser })(Root));
+const mapStateFromProps = (state) => ({
+  isLoading: state.user.isLoading,
+});
+
+const RootWithAuth = withRouter(
+  connect(mapStateFromProps, { setUser, clearUser })(Root)
+);
 
 ReactDOM.render(
   <Provider store={store}>
