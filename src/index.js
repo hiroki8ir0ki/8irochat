@@ -30,7 +30,7 @@ class Root extends React.Component {
         this.props.history.push("/");
       } else {
         this.props.history.push("/login");
-        this.props.dispatch(clearUser());
+        this.props.clearUser();
       }
     });
   }

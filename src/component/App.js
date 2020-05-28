@@ -1,4 +1,4 @@
-import React, { Component } from "react";
+import React from "react";
 import { Grid } from "semantic-ui-react";
 import { connect } from "react-redux";
 import "./App.css";
@@ -9,7 +9,6 @@ import Messages from "./Messages/Messages";
 import MetaPanel from "./MetaPanel/MetaPanel";
 
 const App = ({ currentUser, currentChannel }) => {
-  //   console.log(currentChannel);
   return (
     <Grid columns="equal" className="app" style={{ background: "#eee" }}>
       <ColorPanel />
