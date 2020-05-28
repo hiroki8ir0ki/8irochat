@@ -8,7 +8,7 @@ import {
   Button,
   Header,
   Message,
-  Icon,
+  Icon
 } from "semantic-ui-react";
 import { Link } from "react-router-dom";
 
@@ -20,7 +20,7 @@ class Register extends React.Component {
     passwordConfirmation: "",
     errors: [],
     loading: false,
-    usersRef: firebase.database().ref("users"),
+    usersRef: firebase.database().ref("users")
   };
 
   isFormValid = () => {
@@ -28,7 +28,7 @@ class Register extends React.Component {
     let error;
 
     if (this.isFormEmpty(this.state)) {
-      error = { message: "Fill in all fields " };
+      error = { message: "Fill in all fields" };
       this.setState({ errors: errors.concat(error) });
       return false;
     } else if (!this.isPasswordValid(this.state)) {
@@ -36,7 +36,6 @@ class Register extends React.Component {
       this.setState({ errors: errors.concat(error) });
       return false;
     } else {
-      //throw error
       return true;
     }
   };
@@ -60,62 +59,61 @@ class Register extends React.Component {
     }
   };
 
-  displayErrors = (errors) =>
+  displayErrors = errors =>
     errors.map((error, i) => <p key={i}>{error.message}</p>);
 
-  handleChange = (event) => {
+  handleChange = event => {
     this.setState({ [event.target.name]: event.target.value });
   };
 
-  handleSubmit = (event) => {
+  handleSubmit = event => {
+    event.preventDefault();
     if (this.isFormValid()) {
       this.setState({ errors: [], loading: true });
-      event.preventDefault();
       firebase
         .auth()
         .createUserWithEmailAndPassword(this.state.email, this.state.password)
-        .then((createdUser) => {
+        .then(createdUser => {
+          console.log(createdUser);
           createdUser.user
             .updateProfile({
               displayName: this.state.username,
-              photoURL: `http://gravator.com/avator/${md5(
+              photoURL: `http://gravatar.com/avatar/${md5(
                 createdUser.user.email
-              )}?d=identicon`,
+              )}?d=identicon`
             })
             .then(() => {
               this.saveUser(createdUser).then(() => {
-                this.setState({
-                  loading: false,
-                });
+                console.log("user saved");
               });
             })
-            .catch((err) => {
+            .catch(err => {
+              console.error(err);
               this.setState({
                 errors: this.state.errors.concat(err),
-                loading: false,
+                loading: false
               });
             });
         })
-        .catch((err) => {
+        .catch(err => {
+          console.error(err);
           this.setState({
             errors: this.state.errors.concat(err),
-            loading: false,
+            loading: false
           });
         });
     }
   };
 
-  saveUser = (createdUser) => {
+  saveUser = createdUser => {
     return this.state.usersRef.child(createdUser.user.uid).set({
       name: createdUser.user.displayName,
-      avatar: createdUser.user.photoURL,
+      avatar: createdUser.user.photoURL
     });
   };
 
   handleInputError = (errors, inputName) => {
-    return errors.some((error) =>
-      error.message.toLowerCase().includes(inputName)
-    )
+    return errors.some(error => error.message.toLowerCase().includes(inputName))
       ? "error"
       : "";
   };
@@ -127,7 +125,7 @@ class Register extends React.Component {
       password,
       passwordConfirmation,
       errors,
-      loading,
+      loading
     } = this.state;
 
     return (
@@ -135,7 +133,7 @@ class Register extends React.Component {
         <Grid.Column style={{ maxWidth: 450 }}>
           <Header as="h1" icon color="orange" textAlign="center">
             <Icon name="puzzle piece" color="orange" />
-            Register for Awesome Chat
+            Register for DevChat
           </Header>
           <Form onSubmit={this.handleSubmit} size="large">
             <Segment stacked>
@@ -197,10 +195,10 @@ class Register extends React.Component {
               </Button>
             </Segment>
           </Form>
-          {this.state.errors.length > 0 && (
+          {errors.length > 0 && (
             <Message error>
               <h3>Error</h3>
-              {this.displayErrors(this.state.errors)}
+              {this.displayErrors(errors)}
             </Message>
           )}
           <Message>
@@ -211,4 +209,5 @@ class Register extends React.Component {
     );
   }
 }
+
 export default Register;
