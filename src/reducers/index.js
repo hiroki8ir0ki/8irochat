@@ -28,7 +28,7 @@ const initialChannelState = {
 };
 
 const channel_reduce = (state = initialChannelState, action) => {
-  switch (action.types) {
+  switch (action.type) {
     case actionTypes.SET_CURRENT_CHANNEL:
       return {
         ...state,
