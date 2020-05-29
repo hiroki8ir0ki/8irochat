@@ -15,6 +15,7 @@ class MessageForm extends React.Component {
     message: "",
     channel: this.props.currentChannel,
     user: this.props.currentUser,
+    isProgressVisible: true,
     loading: false,
     errors: [],
     modal: false,
@@ -89,7 +90,7 @@ class MessageForm extends React.Component {
             const percentUploaded = Math.round(
               (snap.bytesTransferred / snap.totalBytes) * 100
             );
-            this.props.isProgressBarVisible(percentUploaded);
+            this.setState({ isProgressVisible: true });
             this.setState({ percentUploaded });
           },
           (err) => {
@@ -127,6 +128,7 @@ class MessageForm extends React.Component {
       .set(this.createMessage(fileUrl))
       .then(() => {
         this.setState({ uploadState: "done" });
+        this.setState({ isProgressVisible: false });
       })
       .catch((err) => {
         console.error(err);
@@ -168,6 +170,7 @@ class MessageForm extends React.Component {
           />
           <Button
             color="teal"
+            disabled={uploadState === "uploading"}
             onClick={this.openModal}
             content="Upload Media"
             labelPosition="right"
@@ -179,10 +182,12 @@ class MessageForm extends React.Component {
           closeModal={this.closeModal}
           uploadFile={this.uploadFile}
         />
-        <ProgressBar
-          uploadState={uploadState}
-          percentUploaded={percentUploaded}
-        />
+        {this.state.isProgressVisible && (
+          <ProgressBar
+            uploadState={uploadState}
+            percentUploaded={percentUploaded}
+          />
+        )}
       </Segment>
     );
   }
